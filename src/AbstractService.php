@@ -12,6 +12,10 @@ abstract class AbstractService implements AbstractServiceInterface
 
     public function __construct(ServiceLocatorInterface $serviceLocator, AbstractTableInterface $table)
     {
+        if (!$serviceLocator->has('Zend\Db\Adapter\Adapter')) {
+            throw new \Exception('Can\'t find `Zend\Db\Adapter\Adapter` service');
+        }
+
         $tableGateway = new TableGateway(
             $table->getName(),
             $serviceLocator->get('Zend\Db\Adapter\Adapter'),
