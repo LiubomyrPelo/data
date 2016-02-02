@@ -1,10 +1,19 @@
 {
     "name": "lub/data",
     "description": "Data managing module",
-    "keywords": ["lub", "data", "orm", "pss"],
+    "keywords": [
+        "lub",
+        "data",
+        "orm",
+        "pss"
+    ],
     "type": "library",
     "autoload": {
-        "psr-4": { "Data\\": ["src/"] }
+        "psr-4": {
+            "Data\\": [
+                "Data/"
+            ]
+        }
     },
     "require": {
         "php": ">=5.5.0"
