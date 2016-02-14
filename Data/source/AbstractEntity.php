@@ -21,7 +21,7 @@ abstract class AbstractEntity implements AbstractEntityInterface
                 $_key .= $postfix;
             }
 
-            $this->$key = $this->get($data[$_key]);
+            $this->$key = $this->_get($data[$_key]);
         }
     }
 
@@ -29,7 +29,7 @@ abstract class AbstractEntity implements AbstractEntityInterface
     {
         foreach ($this->getArrayCopy() as $key => $value) {
             if ($this->$key == null) {
-                $this->$key = $this->get($data[$key]);
+                $this->$key = $this->_get($data[$key]);
             }
         }
     }
@@ -37,8 +37,8 @@ abstract class AbstractEntity implements AbstractEntityInterface
     public function updateArray($data)
     {
         foreach ($this->getArrayCopy() as $key => $value) {
-            if ($this->get($data[$key]) != null) {
-                $this->$key = $this->get($data[$key]);
+            if ($this->_get($data[$key]) != null) {
+                $this->$key = $this->_get($data[$key]);
             }
         }
     }
@@ -48,12 +48,17 @@ abstract class AbstractEntity implements AbstractEntityInterface
         return get_object_vars($this);
     }
 
-    public function get(&$val, $default = null)
+    public function _get(&$val, $default = null)
     {
         if (isset($val)) {
             return $val;
         }
 
         return $default;
+    }
+
+    public function get($value)
+    {
+        return $this->$value;
     }
 }

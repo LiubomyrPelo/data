@@ -8,5 +8,6 @@ interface AbstractEntityInterface
     public function additionsArray($data);
     public function updateArray($data);
     public function getArrayCopy();
-    public function get(&$val, $default = null);
+    public function _get(&$val, $default = null);
+    public function get($value);
 }
