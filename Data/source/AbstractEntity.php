@@ -59,6 +59,20 @@ abstract class AbstractEntity implements AbstractEntityInterface
 
     public function get($value)
     {
+        if (preg_match('/[A-Z]/', $value)) {
+            $value = preg_replace_callback(
+                '/[A-Z]/',
+                function ($matches) {
+                    return '_' . strtolower(
+                        current(
+                            $matches
+                        )
+                    );
+                },
+                $value
+            );
+        }
+
         return $this->$value;
     }
 }
