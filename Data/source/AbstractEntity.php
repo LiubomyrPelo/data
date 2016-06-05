@@ -4,8 +4,19 @@ namespace Data;
 
 abstract class AbstractEntity implements AbstractEntityInterface
 {
+    public $methods = [];
+
+    public function __invoke()
+    {
+        if (empty($this->methods)) {
+            $this->constructGetSet();
+        }
+    }
+
     public function exchangeArray($data, $aliases = null, $prefix = null, $postfix = null)
     {
+        $this->__invoke();
+
         foreach ($this->getArrayCopy() as $key => $value) {
             $_key = $key;
 
@@ -21,7 +32,7 @@ abstract class AbstractEntity implements AbstractEntityInterface
                 $_key .= $postfix;
             }
 
-            $this->$key = $this->_get($data[$_key]);
+            $this->$key = $this->get($data[$_key]);
         }
     }
 
@@ -29,7 +40,7 @@ abstract class AbstractEntity implements AbstractEntityInterface
     {
         foreach ($this->getArrayCopy() as $key => $value) {
             if ($this->$key == null) {
-                $this->$key = $this->_get($data[$key]);
+                $this->$key = $this->get($data[$key]);
             }
         }
     }
@@ -37,18 +48,21 @@ abstract class AbstractEntity implements AbstractEntityInterface
     public function updateArray($data)
     {
         foreach ($this->getArrayCopy() as $key => $value) {
-            if ($this->_get($data[$key]) != null) {
-                $this->$key = $this->_get($data[$key]);
+            if ($this->get($data[$key]) != null) {
+                $this->$key = $this->get($data[$key]);
             }
         }
     }
 
     public function getArrayCopy()
     {
-        return get_object_vars($this);
+        $result = get_object_vars($this);
+        unset($result['methods']);
+
+        return $result;
     }
 
-    public function _get(&$val, $default = null)
+    public function get(&$val, $default = null)
     {
         if (isset($val)) {
             return $val;
@@ -57,22 +71,43 @@ abstract class AbstractEntity implements AbstractEntityInterface
         return $default;
     }
 
-    public function get($value)
+    public function constructGetSet()
     {
-        if (preg_match('/[A-Z]/', $value)) {
-            $value = preg_replace_callback(
-                '/[A-Z]/',
-                function ($matches) {
-                    return '_' . strtolower(
-                        current(
-                            $matches
-                        )
-                    );
-                },
-                $value
-            );
+        foreach ($this->getArrayCopy() as $key => $item) {
+            $self = $this;
+
+            $getFunction = function () use ($self, $key) {
+                return $self->{$key};
+            };
+
+            $setFunction = function ($value) use ($self, $key) {
+                $self->{$key} = $value;
+                return $self;
+            };
+
+            $name = ucfirst($key);
+
+            $snakeCase = strpos($name, '_');
+
+            if ($snakeCase) {
+                $name = ucwords($name, '_');
+                $name = str_replace('_', '', $name);
+            }
+
+            $getName = 'get' . $name;
+            $setName = 'set' . $name;
+
+            $this->methods[$getName] = \Closure::bind($getFunction, $this, get_class());
+            $this->methods[$setName] = \Closure::bind($setFunction, $this, get_class());
         }
 
-        return $this->$value;
+        return $this;
+    }
+
+    public function __call($method, $args)
+    {
+        if (is_callable($this->methods[$method])) {
+            return call_user_func_array($this->methods[$method], $args);
+        }
     }
 }

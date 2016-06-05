@@ -65,7 +65,7 @@ abstract class AbstractTable implements AbstractTableInterface
         return $this->select;
     }
 
-    public function fetch()
+    public function fetch($meta = null)
     {
         $this->select->from($this->name);
 
@@ -76,6 +76,15 @@ abstract class AbstractTable implements AbstractTableInterface
         );
 
         $paginator = new Paginator($dbSelect);
+
+        if ($meta) {
+            if (isset($meta['loadAllToFirstPage'])) {
+                $paginator->setItemCountPerPage(
+                    $paginator->getTotalItemCount()
+                );
+            }
+        }
+
         return $this->constructForeignKeys($paginator);
     }
 
@@ -86,6 +95,7 @@ abstract class AbstractTable implements AbstractTableInterface
         }
 
         foreach ($this->foreignKeys as $key) {
+
             foreach ($paginator->getCurrentItems() as $item) {
 
                 if ($this->serviceLocator->has('model\\' . $key->table)) {
@@ -109,10 +119,30 @@ abstract class AbstractTable implements AbstractTableInterface
                 }
 
                 $object = $object
-                    ? $object->count() == 1 ? current($object->getArrayCopy()) : $object->getArrayCopy()
+                    ? (
+                        $object->count() == 1
+                        ? current($object->getArrayCopy())
+                        : $object->getArrayCopy()
+                    )
                     : null;
 
                 $item->{$key->key ? $key->key : $key->table} = $object;
+
+                $functionName = $key->table;
+                $snakeCase = strpos($functionName, '_');
+                if ($snakeCase) {
+                    $functionName = ucwords($functionName, '_');
+                    $functionName = str_replace('_', '', $functionName);
+                } else {
+                    $functionName = ucfirst($functionName);
+                }
+                $functionName = 'get' . $functionName;
+
+                $getFunction = function () use ($item, $key) {
+                    return $item->{$key->key ? $key->key : $key->table};
+                };
+
+                $item->methods[$functionName] = \Closure::bind($getFunction, $item, get_class($item));
             }
         }
 
@@ -143,6 +173,11 @@ abstract class AbstractTable implements AbstractTableInterface
         }
 
         $data = (array) $entity;
+
+        if (isset($data['methods'])) {
+            unset($data['methods']);
+        }
+
         $id = (int) $entity->id;
 
         if ($id == 0) {
@@ -159,10 +194,10 @@ abstract class AbstractTable implements AbstractTableInterface
         }
     }
 
-    public function delete($entity)
+    public function delete($entity, $id = 'id')
     {
         $this->tableGateway->delete([
-            'id' => (int) $entity->id,
+            $id => (int) $entity->id,
         ]);
     }
 }
