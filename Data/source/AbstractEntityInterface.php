@@ -11,4 +11,5 @@ interface AbstractEntityInterface
     public function get(&$val, $default = null);
     public function constructGetSet();
     public function __call($method, $args);
+    public function getArrayProperties();
 }

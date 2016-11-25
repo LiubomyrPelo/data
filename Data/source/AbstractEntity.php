@@ -110,4 +110,12 @@ abstract class AbstractEntity implements AbstractEntityInterface
             return call_user_func_array($this->methods[$method], $args);
         }
     }
+
+    public function getArrayProperties()
+    {
+        $result = get_object_vars($this);
+        unset($result['methods']);
+
+        return array_keys($result);
+    }
 }

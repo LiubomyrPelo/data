@@ -31,6 +31,11 @@ abstract class AbstractTable implements AbstractTableInterface
         $this->serviceLocator = $serviceLocator;
     }
 
+    public function getServiceLocator()
+    {
+        return $this->serviceLocator;
+    }
+
     public function getResultSet()
     {
         $resultSet = new ResultSet();
@@ -78,7 +83,11 @@ abstract class AbstractTable implements AbstractTableInterface
         $paginator = new Paginator($dbSelect);
 
         if ($meta) {
-            if (isset($meta['loadAllToFirstPage'])) {
+            if (
+                isset($meta['loadAllToFirstPage'])
+                ||
+                isset($meta['all'])
+            ) {
                 $paginator->setItemCountPerPage(
                     $paginator->getTotalItemCount()
                 );
@@ -166,7 +175,7 @@ abstract class AbstractTable implements AbstractTableInterface
             ->current();
     }
 
-    public function save($entity = null)
+    public function save($entity = null, $_id = 'id')
     {
         if (!$entity) {
             $entity = $this->entity;
@@ -178,16 +187,16 @@ abstract class AbstractTable implements AbstractTableInterface
             unset($data['methods']);
         }
 
-        $id = (int) $entity->id;
+        $id = is_object($entity) ? $entity->{$_id} : $entity{$_id};
 
         if ($id == 0) {
             $this->tableGateway->insert($data);
             return $this->tableGateway->getLastInsertValue();
         } else {
-            if ($this->get($id)) {
+            if ($this->get($id, $_id)) {
                 $this->tableGateway->update(
                     $data,
-                    ['id' => $id]
+                    [$_id => $id]
                 );
             }
             return $id;
@@ -197,7 +206,7 @@ abstract class AbstractTable implements AbstractTableInterface
     public function delete($entity, $id = 'id')
     {
         $this->tableGateway->delete([
-            $id => (int) $entity->id,
+            $id => $entity->{$id},
         ]);
     }
 }

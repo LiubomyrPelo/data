@@ -10,15 +10,29 @@ abstract class AbstractService implements AbstractServiceInterface
 {
     protected $table;
 
+    private $dbAdapterServiceName;
+
     public function __construct(ServiceLocatorInterface $serviceLocator, AbstractTableInterface $table)
     {
-        if (!$serviceLocator->has('Zend\Db\Adapter\Adapter')) {
-            throw new \Exception('Can\'t find `Zend\Db\Adapter\Adapter` service');
+        $dbAdapter = null;
+
+        if ($this->dbAdapterServiceName) {
+            if (
+                $serviceLocator->has(
+                    $this->dbAdapterServiceName
+                )
+            ) {
+                $dbAdapter = $serviceLocator->get(
+                    $this->dbAdapterServiceName
+                );
+            }
+        } else {
+            $dbAdapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         }
 
         $tableGateway = new TableGateway(
             $table->getName(),
-            $serviceLocator->get('Zend\Db\Adapter\Adapter'),
+            $dbAdapter,
             null,
             $table->getResultSet()
         );
@@ -32,6 +46,11 @@ abstract class AbstractService implements AbstractServiceInterface
     public function getTable()
     {
         return $this->table;
+    }
+
+    protected function setDbAdapterServiceName($value)
+    {
+        $this->dbAdapterServiceName = (string) $value;
     }
 
     public function save($data)

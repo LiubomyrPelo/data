@@ -1,5 +1,6 @@
 <?php
 
+
 namespace Data\Table;
 
 interface ForeignKeyInterface
