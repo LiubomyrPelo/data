@@ -175,13 +175,13 @@ abstract class AbstractTable implements AbstractTableInterface
             ->current();
     }
 
-    public function save($entity = null, $_id = 'id')
+    public function save($entity = null, $_id = 'id', $insert = false)
     {
         if (!$entity) {
             $entity = $this->entity;
         }
 
-        $data = (array) $entity;
+        $data = !is_array($entity) ? (array) $entity : $entity;
 
         if (isset($data['methods'])) {
             unset($data['methods']);
@@ -189,7 +189,11 @@ abstract class AbstractTable implements AbstractTableInterface
 
         $id = is_object($entity) ? $entity->{$_id} : $entity{$_id};
 
-        if ($id == 0) {
+        if (
+            $id == 0
+            ||
+            $insert
+        ) {
             $this->tableGateway->insert($data);
             return $this->tableGateway->getLastInsertValue();
         } else {
