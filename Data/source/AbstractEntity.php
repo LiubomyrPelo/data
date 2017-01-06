@@ -13,6 +13,13 @@ abstract class AbstractEntity implements AbstractEntityInterface
         }
     }
 
+    public function exchange($entity)
+    {
+        $this->exchangeArray(
+            $entity->getArrayCopy()
+        );
+    }
+
     public function exchangeArray($data, $aliases = null, $prefix = null, $postfix = null)
     {
         $this->__invoke();

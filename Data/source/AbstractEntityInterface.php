@@ -4,6 +4,7 @@ namespace Data;
 
 interface AbstractEntityInterface
 {
+    public function exchange($entity);
     public function exchangeArray($data, $aliases = null, $prefix = null, $postfix = null);
     public function additionsArray($data);
     public function updateArray($data);
